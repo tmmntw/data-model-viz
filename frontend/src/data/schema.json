@@ -1,0 +1,794 @@
+{
+  "metadata": {
+    "org": "GamingCorp",
+    "totalEntities": 113,
+    "totalWorkflows": 1208,
+    "activeWorkflows": 970,
+    "managedWorkflows": 715,
+    "unmanagedWorkflows": 493
+  },
+  "entities": [
+    {
+      "id": "case",
+      "displayName": "Case",
+      "logicalName": "incident",
+      "isCustom": false,
+      "attributeCount": 936,
+      "workflowCount": 152,
+      "category": "core",
+      "description": "Primary work container for customer care operations",
+      "issues": [
+        {
+          "type": "attribute_bloat",
+          "severity": "high",
+          "description": "936 attributes vs expected 150-250 for healthy D365 CS"
+        },
+        {
+          "type": "duplicate_hierarchy",
+          "severity": "high",
+          "description": "Multiple parent/child lookups: parentcaseid, custom_parentcaseid, existingcase, masterid, custom_childcases"
+        },
+        {
+          "type": "polymorphic_lookups",
+          "severity": "high",
+          "description": "10+ lookups to Account entity serving different business roles (retailer, location, gaming site, rep)"
+        },
+        {
+          "type": "workflow_density",
+          "severity": "medium",
+          "description": "152 workflows on single entity, many running real-time"
+        }
+      ],
+      "attributes": {
+        "total": 936,
+        "lookups": 62,
+        "choices": 85,
+        "text": 180,
+        "numeric": 45,
+        "datetime": 38,
+        "other": 526
+      },
+      "duplicateFields": [
+        {
+          "concept": "Parent Case",
+          "fields": [
+            "parentcaseid (OOB)",
+            "gc_parentcaseid (Custom)",
+            "existingcase (OOB)"
+          ],
+          "recommendation": "Use parentcaseid as canonical. Deprecate gc_parentcaseid."
+        },
+        {
+          "concept": "Purchase Location",
+          "fields": [
+            "gc_locationofpurchase",
+            "gc_purchase_location",
+            "gc_purchaselocation"
+          ],
+          "recommendation": "Three fields for same concept. Consolidate to one."
+        },
+        {
+          "concept": "Assigned Rep",
+          "fields": ["gc_assignedrepno", "gc_assignedrepno1"],
+          "recommendation": "Duplicate numbering suggests copy/paste creation. Pick one."
+        }
+      ]
+    },
+    {
+      "id": "account",
+      "displayName": "Account",
+      "logicalName": "account",
+      "isCustom": false,
+      "attributeCount": 289,
+      "workflowCount": 8,
+      "category": "core",
+      "description": "Overloaded party entity: retailer, location, partner, customer account",
+      "issues": [
+        {
+          "type": "role_overload",
+          "severity": "high",
+          "description": "Single entity represents retailers, purchase locations, gaming sites, partners, and customer accounts"
+        },
+        {
+          "type": "segmentation_failure",
+          "severity": "high",
+          "description": "No reliable way to distinguish account types without custom logic"
+        }
+      ],
+      "roles": [
+        "Customer Account",
+        "Retailer",
+        "Purchase Location",
+        "Gaming Site",
+        "Reporting Rep",
+        "Assigned Rep",
+        "Partner"
+      ],
+      "attributes": {
+        "total": 289,
+        "lookups": 28,
+        "choices": 30,
+        "text": 95,
+        "numeric": 20,
+        "datetime": 15,
+        "other": 101
+      }
+    },
+    {
+      "id": "contact",
+      "displayName": "Contact",
+      "logicalName": "contact",
+      "isCustom": false,
+      "attributeCount": 424,
+      "workflowCount": 16,
+      "category": "core",
+      "description": "Person records: customers, claimants, internal contacts",
+      "issues": [],
+      "attributes": {
+        "total": 424,
+        "lookups": 35,
+        "choices": 40,
+        "text": 120,
+        "numeric": 25,
+        "datetime": 20,
+        "other": 184
+      }
+    },
+    {
+      "id": "activity",
+      "displayName": "Activity",
+      "logicalName": "activitypointer",
+      "isCustom": false,
+      "attributeCount": 85,
+      "workflowCount": 9,
+      "category": "core",
+      "description": "Interactions and communications tracked against cases",
+      "issues": [],
+      "attributes": {
+        "total": 85,
+        "lookups": 12,
+        "choices": 8,
+        "text": 20,
+        "numeric": 5,
+        "datetime": 10,
+        "other": 30
+      }
+    },
+    {
+      "id": "note",
+      "displayName": "Note",
+      "logicalName": "annotation",
+      "isCustom": false,
+      "attributeCount": 35,
+      "workflowCount": 0,
+      "category": "core",
+      "description": "Notes and file attachments on cases",
+      "issues": [],
+      "attributes": {
+        "total": 35,
+        "lookups": 5,
+        "choices": 2,
+        "text": 15,
+        "numeric": 2,
+        "datetime": 3,
+        "other": 8
+      }
+    },
+    {
+      "id": "prize_claim",
+      "displayName": "Prize Claim",
+      "logicalName": "gc_prizeclaim",
+      "isCustom": true,
+      "attributeCount": 568,
+      "workflowCount": 60,
+      "category": "operations",
+      "description": "Prize claim processing and validation workflow",
+      "issues": [
+        {
+          "type": "attribute_bloat",
+          "severity": "high",
+          "description": "568 attributes suggests entity absorbed multiple concerns"
+        },
+        {
+          "type": "workflow_density",
+          "severity": "medium",
+          "description": "60 workflows indicates heavy business process encoding"
+        }
+      ],
+      "attributes": {
+        "total": 568,
+        "lookups": 45,
+        "choices": 65,
+        "text": 140,
+        "numeric": 50,
+        "datetime": 35,
+        "other": 233
+      }
+    },
+    {
+      "id": "investigation",
+      "displayName": "Investigation",
+      "logicalName": "gc_investigation",
+      "isCustom": true,
+      "attributeCount": 579,
+      "workflowCount": 74,
+      "category": "operations",
+      "description": "Compliance and regulatory investigation tracking",
+      "issues": [
+        {
+          "type": "duplicate_lookups",
+          "severity": "medium",
+          "description": "Two Investigator Assigned fields with slightly different schema names"
+        },
+        {
+          "type": "attribute_bloat",
+          "severity": "high",
+          "description": "579 attributes: heaviest custom entity in the model"
+        }
+      ],
+      "attributes": {
+        "total": 579,
+        "lookups": 48,
+        "choices": 70,
+        "text": 150,
+        "numeric": 40,
+        "datetime": 30,
+        "other": 241
+      }
+    },
+    {
+      "id": "major_win",
+      "displayName": "Major Win",
+      "logicalName": "gc_majorwin",
+      "isCustom": true,
+      "attributeCount": 330,
+      "workflowCount": 41,
+      "category": "operations",
+      "description": "High-value winning ticket processing",
+      "issues": [
+        {
+          "type": "duplicate_contact_lookups",
+          "severity": "medium",
+          "description": "Two contact lookups: gc_majorwincontactid and gc_contactid"
+        }
+      ],
+      "attributes": {
+        "total": 330,
+        "lookups": 17,
+        "choices": 35,
+        "text": 90,
+        "numeric": 30,
+        "datetime": 20,
+        "other": 138
+      }
+    },
+    {
+      "id": "violation",
+      "displayName": "Violation",
+      "logicalName": "gc_violation",
+      "isCustom": true,
+      "attributeCount": 88,
+      "workflowCount": 11,
+      "category": "operations",
+      "description": "Regulatory violations linked to investigations",
+      "issues": [],
+      "attributes": {
+        "total": 88,
+        "lookups": 10,
+        "choices": 12,
+        "text": 25,
+        "numeric": 8,
+        "datetime": 5,
+        "other": 28
+      }
+    },
+    {
+      "id": "retail_support",
+      "displayName": "Retail Support",
+      "logicalName": "gc_retailsupport",
+      "isCustom": true,
+      "attributeCount": 438,
+      "workflowCount": 15,
+      "category": "operations",
+      "description": "Retailer support and operations management",
+      "issues": [
+        {
+          "type": "entity_overlap",
+          "severity": "medium",
+          "description": "Overlaps with Account entity retailer role. Unclear which is authoritative."
+        }
+      ],
+      "attributes": {
+        "total": 438,
+        "lookups": 30,
+        "choices": 50,
+        "text": 110,
+        "numeric": 35,
+        "datetime": 25,
+        "other": 188
+      }
+    },
+    {
+      "id": "work_note",
+      "displayName": "Work Note",
+      "logicalName": "gc_worknote",
+      "isCustom": true,
+      "attributeCount": 96,
+      "workflowCount": 5,
+      "category": "support",
+      "description": "Agent work notes. Potentially redundant with OOB timeline/annotation.",
+      "issues": [
+        {
+          "type": "redundancy",
+          "severity": "low",
+          "description": "Overlaps with OOB annotation and timeline functionality"
+        }
+      ],
+      "attributes": {
+        "total": 96,
+        "lookups": 8,
+        "choices": 10,
+        "text": 30,
+        "numeric": 5,
+        "datetime": 8,
+        "other": 35
+      }
+    },
+    {
+      "id": "safer_gaming",
+      "displayName": "Safer Gaming",
+      "logicalName": "gc_safergaming",
+      "isCustom": true,
+      "attributeCount": 185,
+      "workflowCount": 8,
+      "category": "operations",
+      "description": "Responsible gaming interventions and monitoring",
+      "issues": [],
+      "attributes": {
+        "total": 185,
+        "lookups": 15,
+        "choices": 22,
+        "text": 50,
+        "numeric": 15,
+        "datetime": 12,
+        "other": 71
+      }
+    },
+    {
+      "id": "igaming",
+      "displayName": "iGaming",
+      "logicalName": "gc_igaming",
+      "isCustom": true,
+      "attributeCount": 109,
+      "workflowCount": 9,
+      "category": "operations",
+      "description": "Online gaming support and operations",
+      "issues": [],
+      "attributes": {
+        "total": 109,
+        "lookups": 10,
+        "choices": 14,
+        "text": 30,
+        "numeric": 10,
+        "datetime": 8,
+        "other": 37
+      }
+    },
+    {
+      "id": "aml_alert_cash",
+      "displayName": "AML - Cash Advances",
+      "logicalName": "gc_amlalert_cashadvances",
+      "isCustom": true,
+      "attributeCount": 46,
+      "workflowCount": 2,
+      "category": "aml",
+      "description": "AML alert for cash advance patterns",
+      "issues": [
+        {
+          "type": "entity_sprawl",
+          "severity": "high",
+          "description": "1 of ~20 nearly identical AML alert entities that should be a single entity with a Type field"
+        }
+      ],
+      "attributes": {
+        "total": 46,
+        "lookups": 6,
+        "choices": 8,
+        "text": 12,
+        "numeric": 5,
+        "datetime": 4,
+        "other": 11
+      }
+    },
+    {
+      "id": "aml_alert_fx",
+      "displayName": "AML - Foreign Exchange",
+      "logicalName": "gc_amlalert_foreignexchange",
+      "isCustom": true,
+      "attributeCount": 44,
+      "workflowCount": 2,
+      "category": "aml",
+      "description": "AML alert for foreign exchange patterns",
+      "issues": [
+        {
+          "type": "entity_sprawl",
+          "severity": "high",
+          "description": "1 of ~20 nearly identical AML alert entities"
+        }
+      ],
+      "attributes": {
+        "total": 44,
+        "lookups": 6,
+        "choices": 8,
+        "text": 11,
+        "numeric": 5,
+        "datetime": 4,
+        "other": 10
+      }
+    },
+    {
+      "id": "aml_alert_highvalue",
+      "displayName": "AML - High Value",
+      "logicalName": "gc_amlalert_highvaluelctr",
+      "isCustom": true,
+      "attributeCount": 45,
+      "workflowCount": 2,
+      "category": "aml",
+      "description": "AML alert for high-value large cash transactions",
+      "issues": [
+        {
+          "type": "entity_sprawl",
+          "severity": "high",
+          "description": "1 of ~20 nearly identical AML alert entities"
+        }
+      ],
+      "attributes": {
+        "total": 45,
+        "lookups": 6,
+        "choices": 8,
+        "text": 11,
+        "numeric": 5,
+        "datetime": 4,
+        "other": 11
+      }
+    },
+    {
+      "id": "aml_alert_multisite",
+      "displayName": "AML - Multi-Site",
+      "logicalName": "gc_amlalert_multisite",
+      "isCustom": true,
+      "attributeCount": 44,
+      "workflowCount": 2,
+      "category": "aml",
+      "description": "AML alert for multi-site activity",
+      "issues": [
+        {
+          "type": "entity_sprawl",
+          "severity": "high",
+          "description": "1 of ~20 nearly identical AML alert entities"
+        }
+      ],
+      "attributes": {
+        "total": 44,
+        "lookups": 6,
+        "choices": 8,
+        "text": 11,
+        "numeric": 5,
+        "datetime": 4,
+        "other": 10
+      }
+    },
+    {
+      "id": "aml_alert_thirdparty",
+      "displayName": "AML - Third Party",
+      "logicalName": "gc_amlalert_thirdparty",
+      "isCustom": true,
+      "attributeCount": 46,
+      "workflowCount": 2,
+      "category": "aml",
+      "description": "AML alert for third party transactions",
+      "issues": [
+        {
+          "type": "entity_sprawl",
+          "severity": "high",
+          "description": "1 of ~20 nearly identical AML alert entities"
+        }
+      ],
+      "attributes": {
+        "total": 46,
+        "lookups": 6,
+        "choices": 8,
+        "text": 12,
+        "numeric": 5,
+        "datetime": 4,
+        "other": 11
+      }
+    },
+    {
+      "id": "aml_alert_frontmoney",
+      "displayName": "AML - Front Money",
+      "logicalName": "gc_amlalert_frontmoney",
+      "isCustom": true,
+      "attributeCount": 45,
+      "workflowCount": 2,
+      "category": "aml",
+      "description": "AML alert for front money deposits",
+      "issues": [
+        {
+          "type": "entity_sprawl",
+          "severity": "high",
+          "description": "1 of ~20 nearly identical AML alert entities"
+        }
+      ],
+      "attributes": {
+        "total": 45,
+        "lookups": 6,
+        "choices": 8,
+        "text": 11,
+        "numeric": 5,
+        "datetime": 4,
+        "other": 11
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "id": "r1",
+      "source": "case",
+      "target": "account",
+      "label": "Customer Account",
+      "isProblematic": false
+    },
+    {
+      "id": "r2",
+      "source": "case",
+      "target": "account",
+      "label": "Retailer",
+      "isProblematic": true,
+      "issue": "Account used as retailer"
+    },
+    {
+      "id": "r3",
+      "source": "case",
+      "target": "account",
+      "label": "Purchase Location (x3)",
+      "isProblematic": true,
+      "issue": "3 duplicate fields for same concept"
+    },
+    {
+      "id": "r4",
+      "source": "case",
+      "target": "account",
+      "label": "Gaming Site",
+      "isProblematic": true,
+      "issue": "Account used as gaming site"
+    },
+    {
+      "id": "r5",
+      "source": "case",
+      "target": "account",
+      "label": "Assigned Rep (x2)",
+      "isProblematic": true,
+      "issue": "Duplicate rep fields"
+    },
+    {
+      "id": "r6",
+      "source": "case",
+      "target": "account",
+      "label": "Confirmed Rep",
+      "isProblematic": true,
+      "issue": "Account used as rep"
+    },
+    {
+      "id": "r7",
+      "source": "case",
+      "target": "contact",
+      "label": "Customer",
+      "isProblematic": false
+    },
+    {
+      "id": "r8",
+      "source": "case",
+      "target": "case",
+      "label": "Parent Case (x2)",
+      "isProblematic": true,
+      "issue": "OOB and custom parent case fields both exist"
+    },
+    {
+      "id": "r10",
+      "source": "major_win",
+      "target": "case",
+      "label": "Originating Case",
+      "isProblematic": false
+    },
+    {
+      "id": "r11",
+      "source": "investigation",
+      "target": "case",
+      "label": "Originating Case",
+      "isProblematic": false
+    },
+    {
+      "id": "r12",
+      "source": "violation",
+      "target": "case",
+      "label": "Originating Case",
+      "isProblematic": false
+    },
+    {
+      "id": "r13",
+      "source": "investigation",
+      "target": "major_win",
+      "label": "Originating Win",
+      "isProblematic": false
+    },
+    {
+      "id": "r14",
+      "source": "violation",
+      "target": "investigation",
+      "label": "Investigation Unit",
+      "isProblematic": false
+    },
+    {
+      "id": "r15",
+      "source": "major_win",
+      "target": "contact",
+      "label": "Winner (x2)",
+      "isProblematic": true,
+      "issue": "Duplicate contact lookups for winner"
+    },
+    {
+      "id": "r16",
+      "source": "major_win",
+      "target": "account",
+      "label": "Retailer",
+      "isProblematic": true,
+      "issue": "Account used as retailer again"
+    },
+    {
+      "id": "r17",
+      "source": "investigation",
+      "target": "account",
+      "label": "Account/Contact",
+      "isProblematic": false
+    },
+    {
+      "id": "r18",
+      "source": "investigation",
+      "target": "account",
+      "label": "Corrective RL (x2)",
+      "isProblematic": true,
+      "issue": "Duplicate corrective action fields"
+    },
+    {
+      "id": "r19",
+      "source": "activity",
+      "target": "case",
+      "label": "Regarding",
+      "isProblematic": false
+    },
+    {
+      "id": "r20",
+      "source": "note",
+      "target": "case",
+      "label": "Regarding",
+      "isProblematic": false
+    },
+    {
+      "id": "r21",
+      "source": "work_note",
+      "target": "case",
+      "label": "Related Case",
+      "isProblematic": false
+    },
+    {
+      "id": "r22",
+      "source": "retail_support",
+      "target": "case",
+      "label": "Case Relationship",
+      "isProblematic": false
+    },
+    {
+      "id": "r23",
+      "source": "retail_support",
+      "target": "account",
+      "label": "Retailer",
+      "isProblematic": true,
+      "issue": "Overlaps with Account retailer role"
+    },
+    {
+      "id": "r24",
+      "source": "prize_claim",
+      "target": "case",
+      "label": "Case Relationship",
+      "isProblematic": false
+    },
+    {
+      "id": "r25",
+      "source": "prize_claim",
+      "target": "contact",
+      "label": "Claimant",
+      "isProblematic": false
+    },
+    {
+      "id": "r26",
+      "source": "aml_alert_cash",
+      "target": "investigation",
+      "label": "Related Investigation",
+      "isProblematic": false
+    },
+    {
+      "id": "r27",
+      "source": "aml_alert_fx",
+      "target": "investigation",
+      "label": "Related Investigation",
+      "isProblematic": false
+    },
+    {
+      "id": "r28",
+      "source": "aml_alert_highvalue",
+      "target": "investigation",
+      "label": "Related Investigation",
+      "isProblematic": false
+    },
+    {
+      "id": "r29",
+      "source": "aml_alert_multisite",
+      "target": "investigation",
+      "label": "Related Investigation",
+      "isProblematic": false
+    },
+    {
+      "id": "r30",
+      "source": "aml_alert_thirdparty",
+      "target": "investigation",
+      "label": "Related Investigation",
+      "isProblematic": false
+    },
+    {
+      "id": "r31",
+      "source": "aml_alert_frontmoney",
+      "target": "investigation",
+      "label": "Related Investigation",
+      "isProblematic": false
+    },
+    {
+      "id": "r33",
+      "source": "safer_gaming",
+      "target": "case",
+      "label": "Related Case",
+      "isProblematic": false
+    },
+    {
+      "id": "r34",
+      "source": "igaming",
+      "target": "case",
+      "label": "Related Case",
+      "isProblematic": false
+    },
+    {
+      "id": "r35",
+      "source": "case",
+      "target": "investigation",
+      "label": "Investigation-Case Rel",
+      "isProblematic": true,
+      "issue": "Bidirectional lookup creates circular dependency"
+    },
+    {
+      "id": "r36",
+      "source": "case",
+      "target": "prize_claim",
+      "label": "Prize-Case Rel",
+      "isProblematic": true,
+      "issue": "Bidirectional lookup creates circular dependency"
+    },
+    {
+      "id": "r37",
+      "source": "case",
+      "target": "retail_support",
+      "label": "Retail-Case Rel",
+      "isProblematic": true,
+      "issue": "Bidirectional lookup creates circular dependency"
+    }
+  ]
+}
