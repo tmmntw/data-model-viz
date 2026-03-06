@@ -2,6 +2,7 @@ import { useState, useRef, DragEvent, ChangeEvent } from "react";
 import { useLocation } from "wouter";
 import { useSchema, Schema } from "@/lib/schemaContext";
 import { analyzeSchema } from "@/lib/schemaAnalyzer";
+import { isCRMToolboxExport, convertCRMToolboxExport } from "@/lib/crmToolboxConverter";
 import rawExampleSchema from "../data/schema.json";
 
 function isValidSchema(data: unknown): data is Schema {
@@ -50,6 +51,11 @@ export default function Upload() {
   }
 
   function loadSchema(raw: unknown) {
+    // Auto-convert CRM Toolbox / D365 solution export format
+    if (isCRMToolboxExport(raw)) {
+      raw = convertCRMToolboxExport(raw);
+    }
+
     if (!isValidSchema(raw)) {
       setError(
         'Invalid schema: must have an "entities" array where each item has "id" and "displayName".'
