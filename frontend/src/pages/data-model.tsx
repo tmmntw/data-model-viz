@@ -1,4 +1,5 @@
 import { useCallback, useState, useMemo } from "react";
+import { useLocation } from "wouter";
 
 import {
   ReactFlow,
@@ -14,7 +15,8 @@ import {
   Position,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import schema from "../data/schema.json";
+import { useSchema } from "@/lib/schemaContext";
+import { computeLayout } from "@/lib/layoutEngine";
 
 // Color mapping for entity categories
 const CATEGORY_STYLES: Record<
@@ -27,6 +29,12 @@ const CATEGORY_STYLES: Record<
   support: { background: "#0f2918", border: "#22c55e", color: "#86efac" },
 };
 
+const DEFAULT_STYLE = { background: "#111827", border: "#475569", color: "#cbd5e1" };
+
+function getCategoryStyle(cat?: string) {
+  return (cat && CATEGORY_STYLES[cat]) || DEFAULT_STYLE;
+}
+
 // Health color based on attribute count
 function getHealthColor(count: number): string {
   if (count <= 250) return "#22c55e";
@@ -34,9 +42,9 @@ function getHealthColor(count: number): string {
   return "#ef4444";
 }
 
-// Custom node component that renders each entity as a card
+// Custom node component
 function EntityNode({ data }: { data: any }) {
-  const style = CATEGORY_STYLES[data.category] || CATEGORY_STYLES.core;
+  const style = getCategoryStyle(data.category);
   const healthColor = getHealthColor(data.attributeCount);
   const hasIssues = data.issues && data.issues.length > 0;
 
@@ -86,123 +94,101 @@ function EntityNode({ data }: { data: any }) {
             </span>
           )}
         </div>
-        <Handle
-          type="source"
-          position={Position.Bottom}
-          style={{ background: "#555", width: 8, height: 8 }}
-        />
-      </div>
-      );
-      {/* Logical name */}
-      <div style={{ fontSize: 11, color: "#666", marginBottom: 8 }}>
-        {data.logicalName}
-      </div>
-      {/* Attribute health bar */}
-      <div style={{ marginBottom: 6 }}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            fontSize: 11,
-            marginBottom: 3,
-          }}
-        >
-          <span style={{ color: "#888" }}>Attributes</span>
-          <span style={{ color: healthColor, fontWeight: 600 }}>
-            {data.attributeCount}
-          </span>
+
+        {/* Logical name */}
+        <div style={{ fontSize: 11, color: "#666", marginBottom: 8 }}>
+          {data.logicalName}
         </div>
-        <div
-          style={{
-            height: 4,
-            background: "#1e293b",
-            borderRadius: 2,
-            overflow: "hidden",
-          }}
-        >
+
+        {/* Attribute health bar */}
+        <div style={{ marginBottom: 6 }}>
           <div
             style={{
-              width: `${Math.min((data.attributeCount / 1000) * 100, 100)}%`,
-              height: "100%",
-              background: healthColor,
-              borderRadius: 2,
+              display: "flex",
+              justifyContent: "space-between",
+              fontSize: 11,
+              marginBottom: 3,
             }}
-          />
+          >
+            <span style={{ color: "#888" }}>Attributes</span>
+            <span style={{ color: healthColor, fontWeight: 600 }}>
+              {data.attributeCount}
+            </span>
+          </div>
+          <div
+            style={{
+              height: 4,
+              background: "#1e293b",
+              borderRadius: 2,
+              overflow: "hidden",
+            }}
+          >
+            <div
+              style={{
+                width: `${Math.min((data.attributeCount / 1000) * 100, 100)}%`,
+                height: "100%",
+                background: healthColor,
+                borderRadius: 2,
+              }}
+            />
+          </div>
         </div>
-      </div>
-      {/* Workflows */}
-      <div style={{ fontSize: 11, color: "#888", marginBottom: 6 }}>
-        {data.workflowCount} workflows
-      </div>
-      {/* Issues */}
-      {hasIssues && (
-        <div
-          style={{
-            fontSize: 11,
-            color: "#ef4444",
-            borderTop: "1px solid rgba(239,68,68,0.2)",
-            paddingTop: 6,
-            marginTop: 4,
-          }}
-        >
-          {data.issues.length} issue{data.issues.length !== 1 ? "s" : ""}{" "}
-          detected
+
+        {/* Workflows */}
+        <div style={{ fontSize: 11, color: "#888", marginBottom: 6 }}>
+          {data.workflowCount ?? 0} workflows
         </div>
-      )}
+
+        {/* Issues */}
+        {hasIssues && (
+          <div
+            style={{
+              fontSize: 11,
+              color: "#ef4444",
+              borderTop: "1px solid rgba(239,68,68,0.2)",
+              paddingTop: 6,
+              marginTop: 4,
+            }}
+          >
+            {data.issues.length} issue{data.issues.length !== 1 ? "s" : ""}{" "}
+            detected
+          </div>
+        )}
+      </div>
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        style={{ background: "#555", width: 8, height: 8 }}
+      />
     </div>
   );
 }
 
-// Register custom node types
 const nodeTypes = { entity: EntityNode };
 
-// Layout positions for entities
-function getPositions(): Record<string, { x: number; y: number }> {
-  return {
-    // Core entities - top row
-    case: { x: 500, y: 0 },
-    account: { x: 100, y: 0 },
-    contact: { x: 900, y: 0 },
-    activity: { x: 900, y: 180 },
-    note: { x: 1100, y: 180 },
-
-    // Operations - middle rows
-    major_win: { x: 100, y: 250 },
-    investigation: { x: 400, y: 250 },
-    violation: { x: 250, y: 450 },
-    prize_claim: { x: 700, y: 250 },
-    retail_support: { x: 1000, y: 250 },
-    work_note: { x: 1000, y: 450 },
-    safer_gaming: { x: 700, y: 450 },
-    igaming: { x: 500, y: 450 },
-
-    // AML cluster - bottom
-    aml_alert_cash: { x: 50, y: 650 },
-    aml_alert_fx: { x: 270, y: 650 },
-    aml_alert_highvalue: { x: 490, y: 650 },
-    aml_alert_multisite: { x: 710, y: 650 },
-    aml_alert_thirdparty: { x: 930, y: 650 },
-    aml_alert_frontmoney: { x: 1150, y: 650 },
-  };
-}
-
 export default function DataModel() {
+  const { schema } = useSchema();
+  const [, navigate] = useLocation();
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
-  const positions = getPositions();
 
-  // Convert schema entities to React Flow nodes
+  const positions = useMemo(
+    () => computeLayout(schema?.entities ?? []),
+    [schema]
+  );
+
   const initialNodes: Node[] = useMemo(() => {
+    if (!schema) return [];
     return schema.entities.map((entity) => ({
       id: entity.id,
       type: "entity",
-      position: positions[entity.id] || { x: 0, y: 0 },
+      position: positions[entity.id] ?? { x: 0, y: 0 },
       data: entity,
     }));
-  }, []);
+  }, [schema, positions]);
 
-  // Convert schema relationships to React Flow edges
   const initialEdges: Edge[] = useMemo(() => {
-    return schema.relationships.map((rel) => ({
+    if (!schema) return [];
+    return (schema.relationships ?? []).map((rel) => ({
       id: rel.id,
       source: rel.source,
       target: rel.target,
@@ -216,10 +202,7 @@ export default function DataModel() {
         fontSize: 10,
         fill: rel.isProblematic ? "#ef4444" : "#64748b",
       },
-      labelBgStyle: {
-        fill: "#0a0a0a",
-        fillOpacity: 0.8,
-      },
+      labelBgStyle: { fill: "#0a0a0a", fillOpacity: 0.8 },
       markerEnd: {
         type: MarkerType.ArrowClosed,
         color: rel.isProblematic ? "#ef4444" : "#334155",
@@ -227,20 +210,59 @@ export default function DataModel() {
         height: 15,
       },
     }));
-  }, []);
+  }, [schema]);
 
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [nodes, , onNodesChange] = useNodesState(initialNodes);
+  const [edges, , onEdgesChange] = useEdgesState(initialEdges);
 
-  // Find selected entity for detail panel
   const selectedEntity = useMemo(() => {
-    if (!selectedNode) return null;
-    return schema.entities.find((e) => e.id === selectedNode) || null;
-  }, [selectedNode]);
+    if (!selectedNode || !schema) return null;
+    return schema.entities.find((e) => e.id === selectedNode) ?? null;
+  }, [selectedNode, schema]);
 
   const onNodeClick = useCallback((_: any, node: Node) => {
     setSelectedNode(node.id);
   }, []);
+
+  // Collect unique categories for legend
+  const usedCategories = useMemo(() => {
+    if (!schema) return [];
+    const cats = new Set(schema.entities.map((e) => e.category ?? "core"));
+    return [...cats].filter((c) => CATEGORY_STYLES[c]);
+  }, [schema]);
+
+  if (!schema) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          background: "#0a0a0a",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          fontFamily: "system-ui, sans-serif",
+          color: "#555",
+        }}
+      >
+        <p style={{ marginBottom: 16 }}>No schema loaded.</p>
+        <button
+          onClick={() => navigate("/")}
+          style={{
+            background: "#1e293b",
+            border: "1px solid #334155",
+            borderRadius: 8,
+            padding: "8px 20px",
+            color: "#93c5fd",
+            cursor: "pointer",
+            fontSize: 13,
+          }}
+        >
+          ← Upload a schema
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -252,7 +274,68 @@ export default function DataModel() {
       }}
     >
       {/* Graph area */}
-      <div style={{ flex: 1 }}>
+      <div style={{ flex: 1, position: "relative" }}>
+        {/* Back button */}
+        <button
+          onClick={() => navigate("/")}
+          style={{
+            position: "absolute",
+            top: 12,
+            left: 12,
+            zIndex: 10,
+            background: "#1e293b",
+            border: "1px solid #334155",
+            borderRadius: 8,
+            padding: "6px 14px",
+            color: "#93c5fd",
+            fontSize: 12,
+            cursor: "pointer",
+          }}
+        >
+          ← Upload new schema
+        </button>
+
+        {/* Category legend */}
+        {usedCategories.length > 0 && (
+          <div
+            style={{
+              position: "absolute",
+              top: 12,
+              right: 12,
+              zIndex: 10,
+              background: "rgba(15,23,41,0.9)",
+              border: "1px solid #1e293b",
+              borderRadius: 8,
+              padding: "10px 14px",
+              display: "flex",
+              flexDirection: "column",
+              gap: 6,
+            }}
+          >
+            {usedCategories.map((cat) => {
+              const s = CATEGORY_STYLES[cat];
+              return (
+                <div
+                  key={cat}
+                  style={{ display: "flex", alignItems: "center", gap: 8 }}
+                >
+                  <div
+                    style={{
+                      width: 10,
+                      height: 10,
+                      borderRadius: 2,
+                      background: s.border,
+                    }}
+                  />
+                  <span style={{ fontSize: 11, color: "#aaa", textTransform: "capitalize" }}>
+                    {cat}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -277,7 +360,7 @@ export default function DataModel() {
           <MiniMap
             nodeColor={(node) => {
               const cat = node.data?.category as string;
-              return CATEGORY_STYLES[cat]?.border || "#3b82f6";
+              return getCategoryStyle(cat).border;
             }}
             style={{
               background: "#0f172a",
@@ -327,9 +410,7 @@ export default function DataModel() {
                 marginBottom: 16,
               }}
             >
-              <div
-                style={{ background: "#1a1a1a", padding: 10, borderRadius: 6 }}
-              >
+              <div style={{ background: "#1a1a1a", padding: 10, borderRadius: 6 }}>
                 <div
                   style={{
                     fontSize: 20,
@@ -341,13 +422,9 @@ export default function DataModel() {
                 </div>
                 <div style={{ fontSize: 11, color: "#666" }}>Attributes</div>
               </div>
-              <div
-                style={{ background: "#1a1a1a", padding: 10, borderRadius: 6 }}
-              >
-                <div
-                  style={{ fontSize: 20, fontWeight: 700, color: "#93c5fd" }}
-                >
-                  {selectedEntity.workflowCount}
+              <div style={{ background: "#1a1a1a", padding: 10, borderRadius: 6 }}>
+                <div style={{ fontSize: 20, fontWeight: 700, color: "#93c5fd" }}>
+                  {selectedEntity.workflowCount ?? 0}
                 </div>
                 <div style={{ fontSize: 11, color: "#666" }}>Workflows</div>
               </div>
@@ -387,7 +464,7 @@ export default function DataModel() {
             )}
 
             {/* Issues */}
-            {selectedEntity.issues.length > 0 && (
+            {selectedEntity.issues && selectedEntity.issues.length > 0 && (
               <div style={{ marginBottom: 16 }}>
                 <div
                   style={{
@@ -421,7 +498,7 @@ export default function DataModel() {
               </div>
             )}
 
-            {/* Duplicate fields (Case entity) */}
+            {/* Duplicate fields */}
             {(selectedEntity as any).duplicateFields && (
               <div>
                 <div
@@ -448,11 +525,7 @@ export default function DataModel() {
                       }}
                     >
                       <div
-                        style={{
-                          fontWeight: 600,
-                          color: "#fbbf24",
-                          marginBottom: 4,
-                        }}
+                        style={{ fontWeight: 600, color: "#fbbf24", marginBottom: 4 }}
                       >
                         {dup.concept}
                       </div>
@@ -462,16 +535,12 @@ export default function DataModel() {
                         </div>
                       ))}
                       <div
-                        style={{
-                          color: "#888",
-                          marginTop: 4,
-                          fontStyle: "italic",
-                        }}
+                        style={{ color: "#888", marginTop: 4, fontStyle: "italic" }}
                       >
                         {dup.recommendation}
                       </div>
                     </div>
-                  ),
+                  )
                 )}
               </div>
             )}
